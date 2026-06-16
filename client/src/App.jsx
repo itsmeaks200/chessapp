@@ -1,122 +1,182 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect, useCallback } from 'react';
+import Auth from './pages/Auth';
+import Game from './pages/Game';
+import useAuth from './hooks/useAuth';
+import { getEloBracket } from './constants';
+import './App.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [username, setUsername] = useState(() => localStorage.getItem('username') || '');
+  const [elo, setElo] = useState(() => Number(localStorage.getItem('elo')) || 800);
+  const [view, setView] = useState(token ? 'lobby' : 'auth');
+  const [gameMode, setGameMode] = useState(null); // 'ai' | 'multiplayer'
+  const [gameId, setGameId] = useState(null);
+  const [color, setColor] = useState(null);
+  const { logout, deleteAccount } = useAuth();
+
+  // Sync view with token state
+  useEffect(() => {
+    if (!token) {
+      setView('auth');
+    }
+  }, [token]);
+
+  const handleAuthSuccess = useCallback(({ token: newToken, username: name, elo: playerElo }) => {
+    setToken(newToken);
+    setUsername(name);
+    setElo(playerElo);
+    localStorage.setItem('token', newToken);
+    localStorage.setItem('username', name);
+    localStorage.setItem('elo', String(playerElo));
+    setView('lobby');
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    logout();
+    setToken(null);
+    setUsername('');
+    setElo(800);
+    localStorage.removeItem('username');
+    localStorage.removeItem('elo');
+    setView('auth');
+  }, [logout]);
+
+  const handleDeleteAccount = useCallback(async () => {
+    const success = await deleteAccount();
+    if (success) {
+      setToken(null);
+      setUsername('');
+      setElo(800);
+      localStorage.removeItem('username');
+      localStorage.removeItem('elo');
+      setView('auth');
+    }
+  }, [deleteAccount]);
+
+  const handleEloUpdate = useCallback((newElo) => {
+    setElo(newElo);
+    localStorage.setItem('elo', String(newElo));
+  }, []);
+
+  const handleStartAI = useCallback(() => {
+    setGameMode('ai');
+    setView('game');
+  }, []);
+
+  const handleStartMultiplayer = useCallback((gId, c) => {
+    setGameMode('multiplayer');
+    setGameId(gId);
+    setColor(c);
+    setView('game');
+  }, []);
+
+  const handleReturnToLobby = useCallback(() => {
+    setGameMode(null);
+    setGameId(null);
+    setColor(null);
+    setView('lobby');
+  }, []);
+
+  // ─── Auth View ───────────────────────────────────────────────
+  if (view === 'auth' || !token) {
+    return <Auth onSuccess={handleAuthSuccess} />;
+  }
+
+  // ─── Game View ───────────────────────────────────────────────
+  if (view === 'game') {
+    return (
+      <div className="app-layout">
+        <header className="app-header">
+          <div className="app-header-left">
+            <span className="app-brand-icon">♔</span>
+            <span className="app-brand-name">Chess Arena</span>
+          </div>
+          <div className="app-header-right">
+            <div className="app-user-info">
+              <span className="app-username">{username}</span>
+              <span className="badge badge-accent app-elo-badge">
+                <span className="elo-dot" style={{ background: getEloBracket(elo).color }}></span>
+                {elo} ELO
+              </span>
+            </div>
+          </div>
+        </header>
+        <Game
+          username={username}
+          elo={elo}
+          onEloUpdate={handleEloUpdate}
+          onReturnToLobby={handleReturnToLobby}
+          mode={gameMode}
+          gameId={gameId}
+          color={color}
+        />
+      </div>
+    );
+  }
+
+  // ─── Lobby View ──────────────────────────────────────────────
+  const bracket = getEloBracket(elo);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="app-layout">
+      {/* Top Navigation Bar */}
+      <header className="app-header">
+        <div className="app-header-left">
+          <span className="app-brand-icon">♔</span>
+          <span className="app-brand-name">Chess Arena</span>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+        <div className="app-header-right">
+          <div className="app-user-info">
+            <span className="app-username">{username}</span>
+            <span
+              className="badge badge-accent app-elo-badge"
+              style={{ '--bracket-color': bracket.color }}
+            >
+              <span className="elo-dot" style={{ background: bracket.color }}></span>
+              {elo} ELO
+            </span>
+          </div>
+          <button className="btn btn-ghost" onClick={handleLogout} id="logout-btn">
+            Sign Out
+          </button>
+        </div>
+      </header>
+
+      {/* Main Lobby Content */}
+      <main className="lobby-temp">
+        <div className="lobby-temp-card card card-glow animate-slide-up">
+          <div className="lobby-temp-icon">♚</div>
+          <h2>Welcome, {username}</h2>
+          <p className="text-muted" style={{ marginTop: '8px' }}>
+            Your rating: <strong style={{ color: bracket.color }}>{elo}</strong> ({bracket.label})
           </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
 
-      <div className="ticks"></div>
+          <div className="lobby-temp-actions">
+            <button className="btn btn-primary" onClick={handleStartAI} id="play-ai-btn">
+              ♟ Play vs AI
+            </button>
+            <button className="btn btn-secondary" disabled>
+              ⚔ Find Opponent
+              <span className="text-xs text-muted" style={{ marginLeft: 4 }}>(Day 7)</span>
+            </button>
+          </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+          <div className="lobby-temp-divider"></div>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+          <button
+            className="btn btn-danger btn-full"
+            onClick={() => {
+              if (window.confirm('Are you sure? This cannot be undone.')) {
+                handleDeleteAccount();
+              }
+            }}
+            id="delete-account-btn"
+          >
+            Delete Account
+          </button>
+        </div>
+      </main>
+    </div>
+  );
 }
-
-export default App

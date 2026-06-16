@@ -1,0 +1,193 @@
+/* ─── Game Page Layout ──────────────────────────────────────── */
+
+.game-page {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  min-height: calc(100vh - 60px);
+}
+
+.game-layout {
+  display: flex;
+  gap: var(--space-xl);
+  align-items: flex-start;
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* ─── Board Section ─────────────────────────────────────────── */
+.game-board-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* ─── Player Labels ─────────────────────────────────────────── */
+.player-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 8px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  width: 100%;
+  max-width: 560px;
+}
+
+.player-piece {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.player-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.opponent-label {
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+.player-self-label {
+  border-color: rgba(200, 164, 78, 0.15);
+}
+
+/* ─── Side Panel ────────────────────────────────────────────── */
+.game-side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 260px;
+  min-width: 260px;
+}
+
+.game-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: auto;
+}
+
+/* ─── Result Modal ──────────────────────────────────────────── */
+.result-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-lg);
+}
+
+.result-modal {
+  width: 100%;
+  max-width: 380px;
+  padding: var(--space-2xl);
+  text-align: center;
+}
+
+.result-emoji {
+  font-size: 3rem;
+  margin-bottom: var(--space-md);
+  animation: scaleIn 0.5s ease-out;
+}
+
+.result-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-lg);
+}
+
+/* ─── ELO Change Display ────────────────────────────────────── */
+.result-elo {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.result-elo-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: var(--space-sm);
+}
+
+.result-elo-change {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.result-elo-old {
+  color: var(--text-secondary);
+}
+
+.result-elo-arrow {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.result-elo-new {
+  color: var(--text-primary);
+}
+
+.result-elo-delta {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.result-elo-delta.positive {
+  color: var(--success);
+}
+
+.result-elo-delta.negative {
+  color: var(--error);
+}
+
+.result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* ─── Responsive ────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .game-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .game-side-panel {
+    width: 100%;
+    min-width: unset;
+    max-width: 560px;
+  }
+}
+
+@media (max-width: 600px) {
+  .game-page {
+    padding: var(--space-md);
+  }
+
+  .player-label {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+}
